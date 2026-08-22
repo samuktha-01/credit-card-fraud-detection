@@ -1,0 +1,24 @@
+# Dataset
+data/creditcard.csv
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environment
+venv/
+.venv/
+
+# VS Code
+.vscode/
+
+# Model files
+models/*.pkl
+models/*.joblib
+
+# OS files
+.DS_Store
+Thumbs.db
