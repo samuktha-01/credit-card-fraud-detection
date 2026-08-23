@@ -167,3 +167,64 @@ def explain(row_number: int):
             "error": "Unable to generate explanation",
             "details": str(error)
         }
+
+@app.get("/transactions")
+def recent_transactions():
+
+    data = pd.read_csv(DATA_PATH)
+
+    # Selected transactions for the monitoring dashboard.
+    # These are historical dataset rows, not live bank transactions.
+    selected_rows = [
+        20000,
+        541,
+        284797,
+        284798,
+        284799,
+        284800,
+        284801,
+        284802,
+        284803,
+        284804
+    ]
+
+    transactions = []
+
+    for row_number in selected_rows:
+
+        # Make sure the row exists
+        if row_number < 0 or row_number >= len(data):
+            continue
+
+        transaction = (
+            data.iloc[row_number]
+            .drop("Class")
+            .to_dict()
+        )
+
+        # Run the actual XGBoost model
+        prediction, probability = predict_fraud(transaction)
+
+        # Determine risk level
+        if probability >= 0.90:
+            risk = "CRITICAL"
+
+        elif probability >= 0.70:
+            risk = "HIGH"
+
+        elif probability >= 0.30:
+            risk = "MEDIUM"
+
+        else:
+            risk = "LOW"
+
+        transactions.append({
+            "transaction_id": row_number,
+            "prediction": prediction,
+            "fraud_probability": float(probability),
+            "risk_level": risk
+        })
+
+    return {
+        "transactions": transactions
+    }

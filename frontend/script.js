@@ -559,3 +559,285 @@ function createShapFeature(item, type) {
     return container;
 
 }
+
+
+// ================= RECENT TRANSACTIONS =================
+
+async function loadRecentTransactions() {
+
+    const tableBody =
+        document.getElementById("transactionsTableBody");
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="4">
+                Loading transactions...
+            </td>
+        </tr>
+    `;
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/transactions"
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `API returned ${response.status}`
+            );
+        }
+
+        const data = await response.json();
+        // ================= FRAUD ALERT =================
+
+const transactions = data.transactions;
+
+// Find the first fraudulent transaction
+const fraudTransaction = transactions.find(
+    transaction =>
+        transaction.prediction === "FRAUD"
+);
+
+
+// Get alert elements
+const fraudAlert =
+    document.getElementById("fraudAlert");
+
+const alertTransaction =
+    document.getElementById("alertTransaction");
+
+const alertMessage =
+    document.getElementById("alertMessage");
+
+const alertProbability =
+    document.getElementById("alertProbability");
+
+const alertRisk =
+    document.getElementById("alertRisk");
+
+const viewExplanationBtn =
+    document.getElementById("viewExplanationBtn");
+
+
+// If a fraud transaction exists
+if (fraudTransaction) {
+
+    // Show the alert
+    fraudAlert.classList.remove("hidden");
+
+
+    // Transaction number
+    alertTransaction.textContent =
+        `Transaction #${fraudTransaction.transaction_id}`;
+
+
+    // Fraud probability
+    const fraudPercentage =
+        fraudTransaction.fraud_probability * 100;
+
+    alertProbability.textContent =
+        fraudPercentage.toFixed(4) + "%";
+
+
+    // Risk level
+    alertRisk.textContent =
+        fraudTransaction.risk_level;
+
+
+    // Alert message
+    alertMessage.textContent =
+        "This transaction has been flagged as potentially fraudulent and requires further investigation.";
+
+
+    // View Explanation button
+    viewExplanationBtn.onclick =
+        function () {
+
+            window.location.href =
+                `http://127.0.0.1:8000/explain/${fraudTransaction.transaction_id}`;
+
+        };
+
+} else {
+
+    // No fraud transactions
+    fraudAlert.classList.add("hidden");
+
+}
+        // ================= MONITORING SUMMARY =================
+
+const totalAnalyzed =
+    transactions.length;
+
+const fraudDetected =
+    transactions.filter(
+        transaction =>
+            transaction.prediction === "FRAUD"
+    ).length;
+
+const normalDetected =
+    transactions.filter(
+        transaction =>
+            transaction.prediction === "NORMAL"
+    ).length;
+
+const criticalDetected =
+    transactions.filter(
+        transaction =>
+            transaction.risk_level === "CRITICAL"
+    ).length;
+
+
+// Update dashboard cards
+
+document.getElementById(
+    "totalAnalyzed"
+).textContent = totalAnalyzed;
+
+document.getElementById(
+    "fraudDetected"
+).textContent = fraudDetected;
+
+document.getElementById(
+    "normalDetected"
+).textContent = normalDetected;
+
+document.getElementById(
+    "criticalDetected"
+).textContent = criticalDetected;
+
+        tableBody.innerHTML = "";
+
+        data.transactions.forEach(transaction => {
+
+            const row =
+                document.createElement("tr");
+
+            // Transaction ID
+            const idCell =
+                document.createElement("td");
+
+            idCell.className =
+                "transaction-id";
+
+            idCell.textContent =
+                `#${transaction.transaction_id}`;
+
+
+            // Prediction
+            const predictionCell =
+                document.createElement("td");
+
+            const predictionBadge =
+                document.createElement("span");
+
+            predictionBadge.className =
+                "prediction-badge";
+
+
+            if (transaction.prediction === "FRAUD") {
+
+                predictionBadge.classList.add(
+                    "prediction-fraud"
+                );
+
+                predictionBadge.textContent =
+                    "🔴 FRAUD";
+
+            } else {
+
+                predictionBadge.classList.add(
+                    "prediction-normal"
+                );
+
+                predictionBadge.textContent =
+                    "🟢 NORMAL";
+            }
+
+
+            predictionCell.appendChild(
+                predictionBadge
+            );
+
+
+            // Probability
+            const probabilityCell =
+                document.createElement("td");
+
+            probabilityCell.className =
+                "probability-value";
+
+            probabilityCell.textContent =
+                (
+                    transaction.fraud_probability * 100
+                ).toFixed(4) + "%";
+
+
+            // Risk
+            const riskCell =
+                document.createElement("td");
+
+            const riskBadge =
+                document.createElement("span");
+
+            riskBadge.className =
+                "risk-badge";
+
+
+            riskBadge.classList.add(
+                `risk-${transaction.risk_level.toLowerCase()}`
+            );
+
+            riskBadge.textContent =
+                transaction.risk_level;
+
+
+            riskCell.appendChild(
+                riskBadge
+            );
+
+
+            // Add cells to row
+
+            row.appendChild(idCell);
+
+            row.appendChild(predictionCell);
+
+            row.appendChild(probabilityCell);
+
+            row.appendChild(riskCell);
+
+
+            // Add row to table
+
+            tableBody.appendChild(row);
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Recent transactions error:",
+            error
+        );
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    Unable to load transactions.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+// Load transactions when page opens
+
+loadRecentTransactions();

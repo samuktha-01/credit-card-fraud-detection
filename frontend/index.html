@@ -490,6 +490,145 @@
 
             </section>
 
+
+            <!-- ================= RECENT TRANSACTIONS ================= -->
+
+<section class="transactions-card">
+
+    <div class="section-heading">
+
+        <div>
+
+            <h2>Recent Transactions</h2>
+
+            <p>
+                Latest transactions analyzed by the fraud
+                detection system.
+            </p>
+
+        </div>
+
+        <div class="monitoring-status">
+            ● LIVE MONITORING
+        </div>
+
+    </div>
+    <!-- ================= FRAUD ALERT ================= -->
+
+<div id="fraudAlert" class="fraud-alert hidden">
+
+    <div class="fraud-alert-icon">
+        🚨
+    </div>
+
+    <div class="fraud-alert-content">
+
+        <div class="fraud-alert-title">
+            FRAUD ALERT
+        </div>
+
+        <h3 id="alertTransaction">
+            Transaction #-
+        </h3>
+
+        <p id="alertMessage">
+            This transaction has been flagged
+            as potentially fraudulent.
+        </p>
+
+        <div class="fraud-alert-details">
+
+            <div>
+                <span>Fraud Probability</span>
+
+                <strong id="alertProbability">
+                    -
+                </strong>
+            </div>
+
+            <div>
+                <span>Risk Level</span>
+
+                <strong id="alertRisk">
+                    -
+                </strong>
+            </div>
+
+        </div>
+
+        <button
+            id="viewExplanationBtn"
+            class="explanation-button"
+        >
+            View Explanation
+        </button>
+
+    </div>
+
+</div>
+<div class="monitoring-summary">
+
+    <div class="monitoring-card">
+        <span>Total Analyzed</span>
+        <strong id="totalAnalyzed">-</strong>
+    </div>
+
+    <div class="monitoring-card fraud-summary">
+        <span>Fraud Detected</span>
+        <strong id="fraudDetected">-</strong>
+    </div>
+
+    <div class="monitoring-card normal-summary">
+        <span>Normal Transactions</span>
+        <strong id="normalDetected">-</strong>
+    </div>
+
+    <div class="monitoring-card critical-summary">
+        <span>Critical Risk</span>
+        <strong id="criticalDetected">-</strong>
+    </div>
+
+</div>
+
+    <div class="transactions-table-wrapper">
+
+        <table class="transactions-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Transaction</th>
+
+                    <th>Prediction</th>
+
+                    <th>Fraud Probability</th>
+
+                    <th>Risk Level</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="transactionsTableBody">
+
+                <tr>
+
+                    <td colspan="4">
+                        Loading transactions...
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
             <!-- ================= ANALYTICS ================= -->
 
 <section class="analytics-card">
