@@ -4,6 +4,7 @@ import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from src.explain import explain_transaction
 
 from .predict import predict_fraud
 
@@ -112,3 +113,57 @@ def demo_fraud():
         "prediction": result,
         "fraud_probability": float(probability)
     }
+
+@app.get("/transaction/{row_number}")
+def analyze_transaction(row_number: int):
+
+    # Check that the requested row exists
+    data = pd.read_csv(DATA_PATH)
+
+    if row_number < 0 or row_number >= len(data):
+        return {
+            "error": "Transaction number is out of range"
+        }
+
+    # Get the transaction
+    transaction = data.iloc[row_number].drop("Class").to_dict()
+
+    # Actual label from dataset
+    actual_result = "FRAUD" if data.iloc[row_number]["Class"] == 1 else "NORMAL"
+
+    # Model prediction
+    prediction, probability = predict_fraud(transaction)
+
+    # Risk classification
+    if probability >= 0.90:
+        risk = "CRITICAL"
+    elif probability >= 0.70:
+        risk = "HIGH"
+    elif probability >= 0.30:
+        risk = "MEDIUM"
+    else:
+        risk = "LOW"
+
+    return {
+        "transaction_id": row_number,
+        "prediction": prediction,
+        "fraud_probability": float(probability),
+        "risk_level": risk,
+        "actual_result": actual_result
+    }
+
+@app.get("/explain/{row_number}")
+def explain(row_number: int):
+    try:
+        return explain_transaction(row_number)
+
+    except ValueError as error:
+        return {
+            "error": str(error)
+        }
+
+    except Exception as error:
+        return {
+            "error": "Unable to generate explanation",
+            "details": str(error)
+        }

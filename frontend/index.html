@@ -5,47 +5,721 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Credit Card Fraud Detection</title>
+    <title>FraudGuard - Credit Card Fraud Detection</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="app">
 
-        <h1>Credit Card Fraud Detection</h1>
+        <!-- ================= SIDEBAR ================= -->
 
-        <p class="subtitle">
-            AI-powered transaction fraud detection
-        </p>
+        <aside class="sidebar">
 
-        <div class="buttons">
+            <div class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span>FraudGuard</span>
+            </div>
 
-            <button id="normalBtn">
-                Test Normal Transaction
-            </button>
+            <nav>
 
-            <button id="fraudBtn">
-                Test Fraud Transaction
-            </button>
+                <button class="nav-item active">
+                    Dashboard
+                </button>
+
+                <button class="nav-item">
+                    Transaction Detection
+                </button>
+
+                <button class="nav-item">
+                    Analytics
+                </button>
+
+                <button class="nav-item">
+                    Model Performance
+                </button>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <p>MODEL</p>
+
+                <strong>XGBoost</strong>
+
+                <span>
+                    Fraud Detection v1.0
+                </span>
+
+            </div>
+
+        </aside>
+
+
+        <!-- ================= MAIN CONTENT ================= -->
+
+        <main class="main">
+
+            <!-- Header -->
+
+            <header class="topbar">
+
+                <div>
+
+                    <h1>
+                        Fraud Detection Dashboard
+                    </h1>
+
+                    <p>
+                        Monitor transactions and analyze fraud risk
+                    </p>
+
+                </div>
+
+                <div class="status">
+
+                    <span class="status-dot"></span>
+
+                    API Online
+
+                </div>
+
+            </header>
+
+
+            <!-- ================= STATISTICS ================= -->
+
+            <section class="stats-grid">
+
+                <div class="stat-card">
+
+                    <span>
+                        Total Transactions
+                    </span>
+
+                    <strong>
+                        284,807
+                    </strong>
+
+                    <small>
+                        Dataset transactions
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Fraud Cases
+                    </span>
+
+                    <strong>
+                        492
+                    </strong>
+
+                    <small>
+                        Fraud transactions
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Precision
+                    </span>
+
+                    <strong>
+                        97.53%
+                    </strong>
+
+                    <small>
+                        Fraud prediction precision
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        Recall
+                    </span>
+
+                    <strong>
+                        80.61%
+                    </strong>
+
+                    <small>
+                        Fraud detection rate
+                    </small>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        F1 Score
+                    </span>
+
+                    <strong>
+                        88.27%
+                    </strong>
+
+                    <small>
+                        Balanced performance
+                    </small>
+
+                </div>
+
+            </section>
+
+
+            <!-- ================= TRANSACTION DETECTION ================= -->
+
+            <section class="detection-card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h2>
+                            Transaction Detection
+                        </h2>
+
+                        <p>
+                            Enter a transaction number to analyze
+                            its fraud risk using the trained model.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Transaction Input -->
+
+                <div class="transaction-input">
+
+                    <label for="transactionId">
+                        Transaction Number
+                    </label>
+
+
+                    <div class="input-row">
+
+                        <input
+                            type="number"
+                            id="transactionId"
+                            placeholder="Example: 541"
+                            min="0"
+                        >
+
+                        <button id="analyzeBtn">
+                            Analyze Transaction
+                        </button>
+
+                    </div>
+
+
+                    <small>
+                        Try transaction 541 for a known fraud
+                        example or 20000 for a normal example.
+                    </small>
+
+                </div>
+
+
+                <!-- ================= RESULT ================= -->
+
+                <div id="result" class="result hidden">
+
+                    <h2 id="prediction">
+                        Analyzing Transaction...
+                    </h2>
+
+
+                    <div class="result-details">
+
+
+                        <!-- Transaction Number -->
+
+                        <div>
+
+                            <span>
+                                Transaction
+                            </span>
+
+                            <strong id="transactionNumber">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <!-- Fraud Probability -->
+
+                        <div>
+
+                            <span>
+                                Fraud Probability
+                            </span>
+
+                            <strong id="probability">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <!-- Risk Level -->
+
+                        <div>
+
+                            <span>
+                                Risk Level
+                            </span>
+
+                            <strong id="riskLevel">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <!-- Actual Result -->
+
+                        <div>
+
+                            <span>
+                                Actual Result
+                            </span>
+
+                            <strong id="actualResult">
+                                -
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            </section>
+
+
+            <!-- ================= SHAP EXPLANATION ================= -->
+
+            <section id="explanationSection" class="explanation-section" style="display: none;">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h2>🔍 Why Was This Transaction Flagged?</h2>
+
+                        <p>
+                            SHAP explains which features influenced
+                            the model's prediction.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Explanation Summary -->
+
+                <div class="explanation-summary">
+
+                    <div>
+
+                        <span>Transaction</span>
+
+                        <strong id="explanationTransaction">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>Prediction</span>
+
+                        <strong id="explanationPrediction">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>Fraud Probability</span>
+
+                        <strong id="explanationProbability">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SHAP Feature Impacts -->
+
+                <div class="shap-columns">
+
+
+                    <!-- Fraud Features -->
+
+                    <div class="shap-card fraud-impact">
+
+                        <h3>
+                            🚨 Features pushing toward FRAUD
+                        </h3>
+
+                        <div id="fraudFeatures"></div>
+
+                    </div>
+
+
+                    <!-- Normal Features -->
+
+                    <div class="shap-card normal-impact">
+
+                        <h3>
+                            ✅ Features pushing toward NORMAL
+                        </h3>
+
+                        <div id="normalFeatures"></div>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+           
+            <!-- ================= MODEL SUMMARY ================= -->
+
+            <section class="model-card">
+
+                <div>
+
+                    <h2>
+                        Model Summary
+                    </h2>
+
+                    <p>
+                        XGBoost classifier trained for highly
+                        imbalanced credit card fraud detection.
+                        The model uses SMOTE and threshold
+                        optimization to improve fraud detection
+                        performance.
+                    </p>
+
+                </div>
+
+
+                <div class="model-details">
+
+
+                    <div>
+
+                        <span>
+                            Algorithm
+                        </span>
+
+                        <strong>
+                            XGBoost
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Sampling
+                        </span>
+
+                        <strong>
+                            SMOTE
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Decision Threshold
+                        </span>
+
+                        <strong>
+                            0.9862
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Average Precision
+                        </span>
+
+                        <strong>
+                            87.91%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ================= ANALYTICS ================= -->
+
+<section class="analytics-card">
+
+    <div class="section-heading">
+
+        <div>
+            <h2>Transaction Analytics</h2>
+
+            <p>
+                Distribution of normal and fraudulent
+                transactions in the dataset.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="analytics-grid">
+
+        <!-- Fraud Distribution -->
+
+        <div class="chart-card">
+
+            <h3>Normal vs Fraud Transactions</h3>
+
+            <canvas id="fraudDistributionChart"></canvas>
 
         </div>
 
-        <div id="result" class="result hidden">
 
-            <h2 id="prediction"></h2>
+        <!-- Confusion Matrix -->
 
-            <p>
-                Fraud Probability:
-                <strong id="probability"></strong>
-            </p>
+        <div class="chart-card">
+
+            <h3>Confusion Matrix</h3>
+
+            <div class="confusion-matrix">
+
+                <div class="matrix-header"></div>
+
+                <div class="matrix-header">
+                    Predicted Normal
+                </div>
+
+                <div class="matrix-header">
+                    Predicted Fraud
+                </div>
+
+
+                <div class="matrix-label">
+                    Actual Normal
+                </div>
+
+                <div class="matrix-cell true-negative">
+                    56,862
+                </div>
+
+                <div class="matrix-cell false-positive">
+                    2
+                </div>
+
+
+                <div class="matrix-label">
+                    Actual Fraud
+                </div>
+
+                <div class="matrix-cell false-negative">
+                    19
+                </div>
+
+                <div class="matrix-cell true-positive">
+                    79
+                </div>
+
+            </div>
 
         </div>
 
     </div>
 
-    <script src="script.js"></script>
+</section>
+
+<!-- ================= MODEL PERFORMANCE ================= -->
+
+<section class="performance-card">
+
+    <div class="section-heading">
+
+        <div>
+            <h2>Model Performance</h2>
+
+            <p>
+                Evaluation metrics from the trained fraud
+                detection model.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="performance-grid">
+
+        <div class="performance-metric">
+            <span>Precision</span>
+            <strong>97.53%</strong>
+            <small>Low false-positive rate</small>
+        </div>
+
+        <div class="performance-metric">
+            <span>Recall</span>
+            <strong>80.61%</strong>
+            <small>Fraud detection rate</small>
+        </div>
+
+        <div class="performance-metric">
+            <span>F1 Score</span>
+            <strong>88.27%</strong>
+            <small>Precision-recall balance</small>
+        </div>
+
+        <div class="performance-metric">
+            <span>Decision Threshold</span>
+            <strong>0.9862</strong>
+            <small>Optimized threshold</small>
+        </div>
+
+    </div>
+
+
+    <div class="chart-card performance-chart">
+
+        <h3>Precision, Recall & F1 Score</h3>
+
+        <canvas id="performanceChart"></canvas>
+
+    </div>
+
+    <!-- ================= THRESHOLD ANALYSIS ================= -->
+
+<div class="threshold-analysis">
+
+    <div class="threshold-heading">
+
+        <div>
+            <h3>Optimal Threshold Analysis</h3>
+
+            <p>
+                Performance at the threshold selected to
+                balance precision and recall.
+            </p>
+        </div>
+
+        <div class="threshold-value">
+
+            <span>Best Threshold</span>
+
+            <strong>0.98621535</strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="threshold-metrics">
+
+        <div class="threshold-metric">
+
+            <span>Precision</span>
+
+            <strong>97.53%</strong>
+
+            <small>
+                Correct positive predictions
+            </small>
+
+        </div>
+
+
+        <div class="threshold-metric">
+
+            <span>Recall</span>
+
+            <strong>80.61%</strong>
+
+            <small>
+                Fraud cases detected
+            </small>
+
+        </div>
+
+
+        <div class="threshold-metric">
+
+            <span>F1 Score</span>
+
+            <strong>88.27%</strong>
+
+            <small>
+                Precision-recall balance
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+</section>
+
+
+            <!-- ================= FOOTER ================= -->
+
+            <footer>
+
+                <p>
+                    Credit Card Fraud Detection System
+                    • Machine Learning + FastAPI
+                </p>
+
+            </footer>
+
+        </main>
+
+    </div>
+
+
+    <!-- JavaScript -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
 
 </body>
 
