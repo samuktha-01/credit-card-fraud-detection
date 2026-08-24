@@ -25,22 +25,33 @@
 
             <nav>
 
-                <button class="nav-item active">
-                    Dashboard
-                </button>
+                <button
+    class="nav-item active"
+    data-target="dashboard"
+>
+    Dashboard
+</button>
 
-                <button class="nav-item">
-                    Transaction Detection
-                </button>
+<button
+    class="nav-item"
+    data-target="transactionDetection"
+>
+    Transaction Detection
+</button>
 
-                <button class="nav-item">
-                    Analytics
-                </button>
+<button
+    class="nav-item"
+    data-target="analytics"
+>
+    Analytics
+</button>
 
-                <button class="nav-item">
-                    Model Performance
-                </button>
-
+<button
+    class="nav-item"
+    data-target="modelPerformance"
+>
+    Model Performance
+</button>
             </nav>
 
             <div class="sidebar-bottom">
@@ -182,7 +193,7 @@
 
             <!-- ================= TRANSACTION DETECTION ================= -->
 
-            <section class="detection-card">
+            
 
                 <div class="section-heading">
 
@@ -225,12 +236,6 @@
                         </button>
 
                     </div>
-
-
-                    <small>
-                        Try transaction 541 for a known fraud
-                        example or 20000 for a normal example.
-                    </small>
 
                 </div>
 
@@ -307,6 +312,13 @@
                         </div>
 
                     </div>
+                    <button
+    id="resultExplanationBtn"
+    class="explanation-button"
+    type="button"
+>
+    🔍 View Explanation
+</button>
 
                 </div>
 
@@ -323,12 +335,20 @@
 
                     <div>
 
-                        <h2>🔍 Why Was This Transaction Flagged?</h2>
+                        <h2>
+    🔍 Why Was This Transaction
+    Classified This Way?
+</h2>
 
-                        <p>
-                            SHAP explains which features influenced
-                            the model's prediction.
-                        </p>
+<p class="explanation-transaction">
+    Transaction #${rowNumber}
+</p>
+
+<p>
+    SHAP shows which features
+    pushed the model toward
+    FRAUD or NORMAL.
+</p>
 
                     </div>
 
@@ -513,82 +533,67 @@
         </div>
 
     </div>
-    <!-- ================= FRAUD ALERT ================= -->
 
-<div id="fraudAlert" class="fraud-alert hidden">
 
-    <div class="fraud-alert-icon">
-        🚨
-    </div>
+    <!-- Monitoring Summary -->
 
-    <div class="fraud-alert-content">
+    <div class="monitoring-summary">
 
-        <div class="fraud-alert-title">
-            FRAUD ALERT
-        </div>
+        <div class="monitoring-card">
 
-        <h3 id="alertTransaction">
-            Transaction #-
-        </h3>
+            <span>
+                Total Analyzed
+            </span>
 
-        <p id="alertMessage">
-            This transaction has been flagged
-            as potentially fraudulent.
-        </p>
-
-        <div class="fraud-alert-details">
-
-            <div>
-                <span>Fraud Probability</span>
-
-                <strong id="alertProbability">
-                    -
-                </strong>
-            </div>
-
-            <div>
-                <span>Risk Level</span>
-
-                <strong id="alertRisk">
-                    -
-                </strong>
-            </div>
+            <strong id="totalAnalyzed">
+                -
+            </strong>
 
         </div>
 
-        <button
-            id="viewExplanationBtn"
-            class="explanation-button"
-        >
-            View Explanation
-        </button>
+
+        <div class="monitoring-card fraud-summary">
+
+            <span>
+                Fraud Detected
+            </span>
+
+            <strong id="fraudDetected">
+                -
+            </strong>
+
+        </div>
+
+
+        <div class="monitoring-card normal-summary">
+
+            <span>
+                Normal Transactions
+            </span>
+
+            <strong id="normalDetected">
+                -
+            </strong>
+
+        </div>
+
+
+        <div class="monitoring-card critical-summary">
+
+            <span>
+                Critical Risk
+            </span>
+
+            <strong id="criticalDetected">
+                -
+            </strong>
+
+        </div>
 
     </div>
 
-</div>
-<div class="monitoring-summary">
 
-    <div class="monitoring-card">
-        <span>Total Analyzed</span>
-        <strong id="totalAnalyzed">-</strong>
-    </div>
-
-    <div class="monitoring-card fraud-summary">
-        <span>Fraud Detected</span>
-        <strong id="fraudDetected">-</strong>
-    </div>
-
-    <div class="monitoring-card normal-summary">
-        <span>Normal Transactions</span>
-        <strong id="normalDetected">-</strong>
-    </div>
-
-    <div class="monitoring-card critical-summary">
-        <span>Critical Risk</span>
-        <strong id="criticalDetected">-</strong>
-    </div>
-
-</div>
+    <!-- Transactions Table -->
 
     <div class="transactions-table-wrapper">
 
@@ -598,13 +603,25 @@
 
                 <tr>
 
-                    <th>Transaction</th>
+                    <th>
+                        Transaction
+                    </th>
 
-                    <th>Prediction</th>
+                    <th>
+                        Prediction
+                    </th>
 
-                    <th>Fraud Probability</th>
+                    <th>
+                        Fraud Probability
+                    </th>
 
-                    <th>Risk Level</th>
+                    <th>
+                        Risk Level
+                    </th>
+
+                    <th>
+                        Explanation
+                    </th>
 
                 </tr>
 
@@ -615,7 +632,7 @@
 
                 <tr>
 
-                    <td colspan="4">
+                    <td colspan="5">
                         Loading transactions...
                     </td>
 
@@ -631,7 +648,6 @@
 
             <!-- ================= ANALYTICS ================= -->
 
-<section class="analytics-card">
 
     <div class="section-heading">
 
@@ -713,7 +729,7 @@
 
 <!-- ================= MODEL PERFORMANCE ================= -->
 
-<section class="performance-card">
+<section id="modelPerformance" class="performance-card"></section>
 
     <div class="section-heading">
 

@@ -21,6 +21,14 @@ const riskLevel =
 const actualResult =
     document.getElementById("actualResult");
 
+const resultExplanationBtn =
+    document.getElementById("resultExplanationBtn");
+
+console.log("transactionNumber:", transactionNumber);
+console.log("probabilityText:", probabilityText);
+console.log("riskLevel:", riskLevel);
+console.log("actualResult:", actualResult);
+
 
 async function analyzeTransaction() {
 
@@ -35,6 +43,13 @@ async function analyzeTransaction() {
     analyzeBtn.textContent = "Analyzing...";
 
     resultBox.className = "result loading";
+    // Hide old SHAP explanation when analyzing a new transaction
+const explanationSection =
+    document.getElementById("explanationSection");
+
+if (explanationSection) {
+    explanationSection.style.display = "none";
+}
 
     predictionText.textContent =
         "Analyzing Transaction...";
@@ -76,6 +91,15 @@ async function analyzeTransaction() {
         actualResult.textContent =
             data.actual_result;
 
+        resultExplanationBtn.onclick =
+    function () {
+
+        loadExplanationForTransaction(
+            rowNumber
+        );
+
+    };
+
 
         if (data.prediction === "FRAUD") {
 
@@ -91,8 +115,7 @@ async function analyzeTransaction() {
             predictionText.textContent =
                 "✅ TRANSACTION IS NORMAL";
         }
-// Load SHAP explanation
-await loadShapExplanation(rowNumber);
+
 
     } catch (error) {
 
@@ -114,6 +137,220 @@ await loadShapExplanation(rowNumber);
         "Analyze Transaction";
 }
 
+async function loadExplanationForTransaction(rowNumber) {
+
+    try {
+
+        const response = await fetch(
+            `http://127.0.0.1:8000/explain/${rowNumber}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+
+            throw new Error(
+                data.error ||
+                "Unable to load explanation"
+            );
+
+        }
+
+        const explanationSection =
+            document.getElementById(
+                "explanationSection"
+            );
+
+        if (!explanationSection) {
+            throw new Error(
+                "Explanation section not found"
+            );
+        }
+
+        const fraudFeatures =
+            data.explanations.filter(
+                item =>
+                    item.direction === "FRAUD"
+            );
+
+        const normalFeatures =
+            data.explanations.filter(
+                item =>
+                    item.direction === "NORMAL"
+            );
+
+
+        explanationSection.style.display =
+            "block";
+
+
+        explanationSection.innerHTML = `
+
+            <div class="section-heading">
+
+                <div>
+
+                    <h2>
+                        🔍 Why Was This Transaction
+                        Classified This Way?
+                    </h2>
+
+                    <p>
+                        <strong>
+                            Transaction #${rowNumber}
+                        </strong>
+                    </p>
+
+                    <p>
+                        SHAP shows which features
+                        pushed the model toward
+                        FRAUD or NORMAL.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="explanation-grid">
+
+
+                <div class="explanation-card">
+
+                    <h3>
+                        🚨 Features pushing toward FRAUD
+                    </h3>
+
+                    <div class="feature-list">
+
+                        ${
+                            fraudFeatures
+                                .slice(0, 6)
+                                .map(feature => `
+
+                                    <div class="shap-feature">
+
+                                        <div class="shap-feature-header">
+
+                                            <strong>
+                                                ${feature.feature}
+                                            </strong>
+
+                                            <span class="fraud-value">
+                                                +${feature.shap_value.toFixed(3)}
+                                            </span>
+
+                                        </div>
+
+                                        <div class="shap-bar">
+
+                                            <div
+                                                class="shap-bar-fraud"
+                                                style="
+                                                    width: ${
+                                                        Math.min(
+                                                            Math.abs(
+                                                                feature.shap_value
+                                                            ) / 7.33 * 100,
+                                                            100
+                                                        )
+                                                    }%;
+                                                "
+                                            ></div>
+
+                                        </div>
+
+                                    </div>
+
+                                `)
+                                .join("")
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="explanation-card">
+
+                    <h3>
+                        ✅ Features pushing toward NORMAL
+                    </h3>
+
+                    <div class="feature-list">
+
+                        ${
+                            normalFeatures
+                                .slice(0, 6)
+                                .map(feature => `
+
+                                    <div class="shap-feature">
+
+                                        <div class="shap-feature-header">
+
+                                            <strong>
+                                                ${feature.feature}
+                                            </strong>
+
+                                            <span class="normal-value">
+                                                ${feature.shap_value.toFixed(3)}
+                                            </span>
+
+                                        </div>
+
+                                        <div class="shap-bar">
+
+                                            <div
+                                                class="shap-bar-normal"
+                                                style="
+                                                    width: ${
+                                                        Math.min(
+                                                            Math.abs(
+                                                                feature.shap_value
+                                                            ) / 7.33 * 100,
+                                                            100
+                                                        )
+                                                    }%;
+                                                "
+                                            ></div>
+
+                                        </div>
+
+                                    </div>
+
+                                `)
+                                .join("")
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        explanationSection.scrollIntoView({
+            behavior: "smooth"
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "SHAP explanation error:",
+            error
+        );
+
+        alert(
+            "Unable to load explanation: " +
+            error.message
+        );
+
+    }
+
+}
 
 analyzeBtn.addEventListener(
     "click",
@@ -134,9 +371,10 @@ transactionInput.addEventListener(
 
 // ================= ANALYTICS CHART =================
 
+// ================= ANALYTICS CHART =================
+
 const chartCanvas =
     document.getElementById("fraudDistributionChart");
-
 
 if (chartCanvas) {
 
@@ -156,7 +394,19 @@ if (chartCanvas) {
                     data: [
                         284315,
                         492
-                    ]
+                    ],
+
+                    backgroundColor: [
+                        "#36A2EB",
+                        "#FF6384"
+                    ],
+
+                    borderColor: [
+                        "#ffffff",
+                        "#ffffff"
+                    ],
+
+                    borderWidth: 2
                 }
             ]
 
@@ -173,6 +423,7 @@ if (chartCanvas) {
                 },
 
                 tooltip: {
+
                     callbacks: {
 
                         label: function(context) {
@@ -181,22 +432,19 @@ if (chartCanvas) {
                                 context.raw;
 
                             const total =
-                                context.dataset.data
-                                .reduce(
+                                context.dataset.data.reduce(
                                     (a, b) => a + b,
                                     0
                                 );
 
                             const percentage =
-                                (
-                                    value / total
-                                ) * 100;
+                                (value / total) * 100;
 
                             return `${context.label}: ${value.toLocaleString()} (${percentage.toFixed(2)}%)`;
-
                         }
 
                     }
+
                 }
 
             }
@@ -277,198 +525,7 @@ if (performanceCanvas) {
 
 }
 
-// ================= SHAP EXPLANATION =================
-
-async function loadShapExplanation(rowNumber) {
-
-    const explanationSection =
-        document.getElementById("explanationSection");
-
-    const transactionElement =
-        document.getElementById("explanationTransaction");
-
-    const predictionElement =
-        document.getElementById("explanationPrediction");
-
-    const probabilityElement =
-        document.getElementById("explanationProbability");
-
-    const fraudFeatures =
-        document.getElementById("fraudFeatures");
-
-    const normalFeatures =
-        document.getElementById("normalFeatures");
-
-
-    // Show loading state
-
-    explanationSection.style.display = "block";
-
-    transactionElement.textContent = rowNumber;
-
-    predictionElement.textContent = "Loading...";
-
-    probabilityElement.textContent = "Loading...";
-
-    fraudFeatures.innerHTML = "<p>Loading explanation...</p>";
-
-    normalFeatures.innerHTML = "";
-
-
-    try {
-
-        // Call SHAP API
-
-        const response = await fetch(
-            `http://127.0.0.1:8000/explain/${rowNumber}`
-        );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `API returned ${response.status}`
-            );
-
-        }
-
-
-        const data = await response.json();
-
-
-        // Check API error
-
-        if (data.error) {
-
-            throw new Error(data.error);
-
-        }
-
-
-        // ================= SUMMARY =================
-
-        transactionElement.textContent =
-            data.transaction_id;
-
-        predictionElement.textContent =
-            data.prediction;
-
-        probabilityElement.textContent =
-            `${(data.fraud_probability * 100).toFixed(4)}%`;
-
-
-        // ================= SHAP VALUES =================
-
-        const fraud = data.explanations.filter(
-            item => item.shap_value > 0
-        );
-
-        const normal = data.explanations.filter(
-            item => item.shap_value < 0
-        );
-
-
-        // Show only strongest impacts
-
-        const topFraud =
-            fraud
-                .sort(
-                    (a, b) =>
-                        Math.abs(b.shap_value) -
-                        Math.abs(a.shap_value)
-                )
-                .slice(0, 6);
-
-
-        const topNormal =
-            normal
-                .sort(
-                    (a, b) =>
-                        Math.abs(b.shap_value) -
-                        Math.abs(a.shap_value)
-                )
-                .slice(0, 6);
-
-
-        // ================= DISPLAY FRAUD FEATURES =================
-
-        fraudFeatures.innerHTML = "";
-
-
-        if (topFraud.length === 0) {
-
-            fraudFeatures.innerHTML =
-                "<p>No strong fraud-driving features.</p>";
-
-        } else {
-
-            topFraud.forEach(item => {
-
-                const row =
-                    createShapFeature(
-                        item,
-                        "fraud"
-                    );
-
-                fraudFeatures.appendChild(row);
-
-            });
-
-        }
-
-
-        // ================= DISPLAY NORMAL FEATURES =================
-
-        normalFeatures.innerHTML = "";
-
-
-        if (topNormal.length === 0) {
-
-            normalFeatures.innerHTML =
-                "<p>No strong normal-driving features.</p>";
-
-        } else {
-
-            topNormal.forEach(item => {
-
-                const row =
-                    createShapFeature(
-                        item,
-                        "normal"
-                    );
-
-                normalFeatures.appendChild(row);
-
-            });
-
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "SHAP explanation error:",
-            error
-        );
-
-
-        predictionElement.textContent =
-            "Unavailable";
-
-        probabilityElement.textContent =
-            "-";
-
-
-        fraudFeatures.innerHTML =
-            `<p>Could not load SHAP explanation.</p>`;
-
-        normalFeatures.innerHTML = "";
-
-    }
-
-}
-
-
+    
 // ================= CREATE SHAP FEATURE =================
 
 function createShapFeature(item, type) {
@@ -565,255 +622,194 @@ function createShapFeature(item, type) {
 
 async function loadRecentTransactions() {
 
-    const tableBody =
-        document.getElementById("transactionsTableBody");
-
-    if (!tableBody) {
-        return;
-    }
-
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="4">
-                Loading transactions...
-            </td>
-        </tr>
-    `;
-
     try {
 
         const response = await fetch(
             "http://127.0.0.1:8000/transactions"
         );
 
-        if (!response.ok) {
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
             throw new Error(
-                `API returned ${response.status}`
+                data.error ||
+                "Unable to load transactions"
             );
         }
 
-        const data = await response.json();
-        // ================= FRAUD ALERT =================
 
-const transactions = data.transactions;
-
-// Find the first fraudulent transaction
-const fraudTransaction = transactions.find(
-    transaction =>
-        transaction.prediction === "FRAUD"
-);
+        const transactions =
+            data.transactions || [];
 
 
-// Get alert elements
-const fraudAlert =
-    document.getElementById("fraudAlert");
+        // ================= SUMMARY =================
 
-const alertTransaction =
-    document.getElementById("alertTransaction");
+        const totalAnalyzed =
+            document.getElementById(
+                "totalAnalyzed"
+            );
 
-const alertMessage =
-    document.getElementById("alertMessage");
+        const fraudDetected =
+            document.getElementById(
+                "fraudDetected"
+            );
 
-const alertProbability =
-    document.getElementById("alertProbability");
+        const normalDetected =
+            document.getElementById(
+                "normalDetected"
+            );
 
-const alertRisk =
-    document.getElementById("alertRisk");
-
-const viewExplanationBtn =
-    document.getElementById("viewExplanationBtn");
-
-
-// If a fraud transaction exists
-if (fraudTransaction) {
-
-    // Show the alert
-    fraudAlert.classList.remove("hidden");
+        const criticalDetected =
+            document.getElementById(
+                "criticalDetected"
+            );
 
 
-    // Transaction number
-    alertTransaction.textContent =
-        `Transaction #${fraudTransaction.transaction_id}`;
+        const fraudCount =
+            transactions.filter(
+                transaction =>
+                    transaction.prediction === "FRAUD"
+            ).length;
 
 
-    // Fraud probability
-    const fraudPercentage =
-        fraudTransaction.fraud_probability * 100;
-
-    alertProbability.textContent =
-        fraudPercentage.toFixed(4) + "%";
-
-
-    // Risk level
-    alertRisk.textContent =
-        fraudTransaction.risk_level;
+        const normalCount =
+            transactions.filter(
+                transaction =>
+                    transaction.prediction === "NORMAL"
+            ).length;
 
 
-    // Alert message
-    alertMessage.textContent =
-        "This transaction has been flagged as potentially fraudulent and requires further investigation.";
+        const criticalCount =
+            transactions.filter(
+                transaction =>
+                    transaction.risk_level === "CRITICAL"
+            ).length;
 
 
-    // View Explanation button
-    viewExplanationBtn.onclick =
-        function () {
+        totalAnalyzed.textContent =
+            transactions.length;
 
-            window.location.href =
-                `http://127.0.0.1:8000/explain/${fraudTransaction.transaction_id}`;
+        fraudDetected.textContent =
+            fraudCount;
 
-        };
+        normalDetected.textContent =
+            normalCount;
 
-} else {
-
-    // No fraud transactions
-    fraudAlert.classList.add("hidden");
-
-}
-        // ================= MONITORING SUMMARY =================
-
-const totalAnalyzed =
-    transactions.length;
-
-const fraudDetected =
-    transactions.filter(
-        transaction =>
-            transaction.prediction === "FRAUD"
-    ).length;
-
-const normalDetected =
-    transactions.filter(
-        transaction =>
-            transaction.prediction === "NORMAL"
-    ).length;
-
-const criticalDetected =
-    transactions.filter(
-        transaction =>
-            transaction.risk_level === "CRITICAL"
-    ).length;
+        criticalDetected.textContent =
+            criticalCount;
 
 
-// Update dashboard cards
+        // ================= TABLE =================
 
-document.getElementById(
-    "totalAnalyzed"
-).textContent = totalAnalyzed;
+        const tableBody =
+            document.getElementById(
+                "transactionsTableBody"
+            );
 
-document.getElementById(
-    "fraudDetected"
-).textContent = fraudDetected;
 
-document.getElementById(
-    "normalDetected"
-).textContent = normalDetected;
+        if (!tableBody) {
+            return;
+        }
 
-document.getElementById(
-    "criticalDetected"
-).textContent = criticalDetected;
 
         tableBody.innerHTML = "";
 
-        data.transactions.forEach(transaction => {
+
+        if (transactions.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5">
+                        No transactions available.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        // ================= CREATE ROWS =================
+
+        transactions.forEach(transaction => {
 
             const row =
                 document.createElement("tr");
 
-            // Transaction ID
-            const idCell =
-                document.createElement("td");
 
-            idCell.className =
-                "transaction-id";
-
-            idCell.textContent =
-                `#${transaction.transaction_id}`;
+            const percentage =
+                transaction.fraud_probability * 100;
 
 
-            // Prediction
-            const predictionCell =
-                document.createElement("td");
-
-            const predictionBadge =
-                document.createElement("span");
-
-            predictionBadge.className =
-                "prediction-badge";
+            const prediction =
+                transaction.prediction;
 
 
-            if (transaction.prediction === "FRAUD") {
+            const predictionDisplay =
+                prediction === "FRAUD"
+                    ? "🔴 FRAUD"
+                    : "🟢 NORMAL";
 
-                predictionBadge.classList.add(
-                    "prediction-fraud"
+
+            row.innerHTML = `
+
+                <td>
+                    <strong>
+                        #${transaction.transaction_id}
+                    </strong>
+                </td>
+
+
+                <td>
+                    ${predictionDisplay}
+                </td>
+
+
+                <td>
+                    ${percentage.toFixed(4)}%
+                </td>
+
+
+                <td>
+                    <span class="risk-${transaction.risk_level.toLowerCase()}">
+                        ${transaction.risk_level}
+                    </span>
+                </td>
+
+
+                <td>
+
+                    <button
+                        class="transaction-explanation-btn"
+                        type="button"
+                    >
+                        🔍 View Explanation
+                    </button>
+
+                </td>
+
+            `;
+
+
+            // ================= EXPLANATION BUTTON =================
+
+            const explanationButton =
+                row.querySelector(
+                    ".transaction-explanation-btn"
                 );
 
-                predictionBadge.textContent =
-                    "🔴 FRAUD";
 
-            } else {
+            explanationButton.addEventListener(
+                "click",
+                function () {
 
-                predictionBadge.classList.add(
-                    "prediction-normal"
-                );
+                    loadExplanationForTransaction(
+                        transaction.transaction_id
+                    );
 
-                predictionBadge.textContent =
-                    "🟢 NORMAL";
-            }
-
-
-            predictionCell.appendChild(
-                predictionBadge
+                }
             );
 
-
-            // Probability
-            const probabilityCell =
-                document.createElement("td");
-
-            probabilityCell.className =
-                "probability-value";
-
-            probabilityCell.textContent =
-                (
-                    transaction.fraud_probability * 100
-                ).toFixed(4) + "%";
-
-
-            // Risk
-            const riskCell =
-                document.createElement("td");
-
-            const riskBadge =
-                document.createElement("span");
-
-            riskBadge.className =
-                "risk-badge";
-
-
-            riskBadge.classList.add(
-                `risk-${transaction.risk_level.toLowerCase()}`
-            );
-
-            riskBadge.textContent =
-                transaction.risk_level;
-
-
-            riskCell.appendChild(
-                riskBadge
-            );
-
-
-            // Add cells to row
-
-            row.appendChild(idCell);
-
-            row.appendChild(predictionCell);
-
-            row.appendChild(probabilityCell);
-
-            row.appendChild(riskCell);
-
-
-            // Add row to table
 
             tableBody.appendChild(row);
 
@@ -827,17 +823,78 @@ document.getElementById(
             error
         );
 
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="4">
-                    Unable to load transactions.
-                </td>
-            </tr>
-        `;
+
+        const tableBody =
+            document.getElementById(
+                "transactionsTableBody"
+            );
+
+
+        if (tableBody) {
+
+            tableBody.innerHTML = `
+
+                <tr>
+
+                    <td colspan="5">
+
+                        Unable to load transactions.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+
     }
+
 }
+
+
 
 
 // Load transactions when page opens
 
 loadRecentTransactions();
+
+
+// ================= SIDEBAR NAVIGATION =================
+
+const navItems =
+    document.querySelectorAll(".nav-item");
+
+navItems.forEach(item => {
+
+    item.addEventListener("click", function () {
+
+        const targetId =
+            this.dataset.target;
+
+        const targetSection =
+            document.getElementById(targetId);
+
+        if (!targetSection) {
+            console.error(
+                "Section not found:",
+                targetId
+            );
+            return;
+        }
+
+        targetSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        // Change active button
+        navItems.forEach(nav => {
+            nav.classList.remove("active");
+        });
+
+        this.classList.add("active");
+
+    });
+
+});
