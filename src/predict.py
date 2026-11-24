@@ -1,8 +1,13 @@
+from pathlib import Path
 import joblib
 import pandas as pd
 
+# Project root directory and model path
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_PATH = BASE_DIR / "models" / "fraud_model.pkl"
+
 # Load trained model
-model = joblib.load("models/fraud_model.pkl")
+model = joblib.load(MODEL_PATH)
 
 
 def predict_fraud(transaction):

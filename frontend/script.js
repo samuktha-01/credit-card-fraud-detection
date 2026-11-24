@@ -24,6 +24,9 @@ const actualResult =
 const resultExplanationBtn =
     document.getElementById("resultExplanationBtn");
 
+const resultErrorNotice =
+    document.getElementById("resultErrorNotice");
+
 console.log("transactionNumber:", transactionNumber);
 console.log("probabilityText:", probabilityText);
 console.log("riskLevel:", riskLevel);
@@ -43,13 +46,23 @@ async function analyzeTransaction() {
     analyzeBtn.textContent = "Analyzing...";
 
     resultBox.className = "result loading";
-    // Hide old SHAP explanation when analyzing a new transaction
-const explanationSection =
-    document.getElementById("explanationSection");
 
-if (explanationSection) {
-    explanationSection.style.display = "none";
-}
+    if (resultErrorNotice) {
+        resultErrorNotice.style.display = "none";
+        resultErrorNotice.textContent = "";
+    }
+
+    if (resultExplanationBtn) {
+        resultExplanationBtn.style.display = "none";
+    }
+
+    // Hide old SHAP explanation when analyzing a new transaction
+    const explanationSection =
+        document.getElementById("explanationSection");
+
+    if (explanationSection) {
+        explanationSection.style.display = "none";
+    }
 
     predictionText.textContent =
         "Analyzing Transaction...";
@@ -91,14 +104,17 @@ if (explanationSection) {
         actualResult.textContent =
             data.actual_result;
 
-        resultExplanationBtn.onclick =
-    function () {
+        if (resultErrorNotice) {
+            resultErrorNotice.style.display = "none";
+            resultErrorNotice.textContent = "";
+        }
 
-        loadExplanationForTransaction(
-            rowNumber
-        );
-
-    };
+        if (resultExplanationBtn) {
+            resultExplanationBtn.style.display = "";
+            resultExplanationBtn.onclick = function () {
+                loadExplanationForTransaction(rowNumber);
+            };
+        }
 
 
         if (data.prediction === "FRAUD") {
@@ -116,6 +132,13 @@ if (explanationSection) {
                 "✅ TRANSACTION IS NORMAL";
         }
 
+        // Automatically synchronize recent transactions history and summary counters
+        try {
+            await loadRecentTransactions();
+        } catch (historyErr) {
+            console.warn("Could not update transaction history:", historyErr);
+        }
+
 
     } catch (error) {
 
@@ -124,10 +147,22 @@ if (explanationSection) {
         resultBox.className = "result error";
 
         predictionText.textContent =
-            "❌ ERROR";
+            "❌ Transaction Analysis Failed";
 
-        probabilityText.textContent =
-            error.message;
+        if (resultErrorNotice) {
+            resultErrorNotice.textContent =
+                error.message || "Unable to analyze transaction. Please check the transaction number.";
+            resultErrorNotice.style.display = "block";
+        }
+
+        probabilityText.textContent = "-";
+        transactionNumber.textContent = "-";
+        riskLevel.textContent = "-";
+        actualResult.textContent = "-";
+
+        if (resultExplanationBtn) {
+            resultExplanationBtn.style.display = "none";
+        }
 
     }
 
@@ -167,17 +202,32 @@ async function loadExplanationForTransaction(rowNumber) {
             );
         }
 
+        const explanations = Array.isArray(data.explanations) ? data.explanations : [];
+
         const fraudFeatures =
-            data.explanations.filter(
+            explanations.filter(
                 item =>
-                    item.direction === "FRAUD"
+                    item && item.direction === "FRAUD"
             );
 
         const normalFeatures =
-            data.explanations.filter(
+            explanations.filter(
                 item =>
-                    item.direction === "NORMAL"
+                    item && item.direction === "NORMAL"
             );
+
+        // Dynamically compute the maximum absolute SHAP value for this transaction
+        let maxShap = 0;
+        for (const item of explanations) {
+            const val = Math.abs(Number(item.shap_value) || 0);
+            if (val > maxShap) {
+                maxShap = val;
+            }
+        }
+        // Avoid division by zero
+        if (maxShap <= 0) {
+            maxShap = 1;
+        }
 
 
         explanationSection.style.display =
@@ -224,46 +274,29 @@ async function loadExplanationForTransaction(rowNumber) {
                     <div class="feature-list">
 
                         ${
-                            fraudFeatures
-                                .slice(0, 6)
-                                .map(feature => `
-
-                                    <div class="shap-feature">
-
-                                        <div class="shap-feature-header">
-
-                                            <strong>
-                                                ${feature.feature}
-                                            </strong>
-
-                                            <span class="fraud-value">
-                                                +${feature.shap_value.toFixed(3)}
-                                            </span>
-
-                                        </div>
-
-                                        <div class="shap-bar">
-
-                                            <div
-                                                class="shap-bar-fraud"
-                                                style="
-                                                    width: ${
-                                                        Math.min(
-                                                            Math.abs(
-                                                                feature.shap_value
-                                                            ) / 7.33 * 100,
-                                                            100
-                                                        )
-                                                    }%;
-                                                "
-                                            ></div>
-
-                                        </div>
-
-                                    </div>
-
-                                `)
-                                .join("")
+                            fraudFeatures.length === 0
+                                ? `<p style="color: #6b7280; font-size: 13px; padding: 8px 0;">No significant features pushed toward fraud.</p>`
+                                : fraudFeatures
+                                    .slice(0, 6)
+                                    .map(feature => {
+                                        const val = Number(feature.shap_value) || 0;
+                                        const width = Math.min((Math.abs(val) / maxShap) * 100, 100);
+                                        return `
+                                            <div class="shap-feature">
+                                                <div class="shap-feature-header">
+                                                    <strong>${feature.feature || "Feature"}</strong>
+                                                    <span class="fraud-value">+${val.toFixed(3)}</span>
+                                                </div>
+                                                <div class="shap-bar">
+                                                    <div
+                                                        class="shap-bar-fraud"
+                                                        style="width: ${width.toFixed(1)}%;"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    })
+                                    .join("")
                         }
 
                     </div>
@@ -280,46 +313,29 @@ async function loadExplanationForTransaction(rowNumber) {
                     <div class="feature-list">
 
                         ${
-                            normalFeatures
-                                .slice(0, 6)
-                                .map(feature => `
-
-                                    <div class="shap-feature">
-
-                                        <div class="shap-feature-header">
-
-                                            <strong>
-                                                ${feature.feature}
-                                            </strong>
-
-                                            <span class="normal-value">
-                                                ${feature.shap_value.toFixed(3)}
-                                            </span>
-
-                                        </div>
-
-                                        <div class="shap-bar">
-
-                                            <div
-                                                class="shap-bar-normal"
-                                                style="
-                                                    width: ${
-                                                        Math.min(
-                                                            Math.abs(
-                                                                feature.shap_value
-                                                            ) / 7.33 * 100,
-                                                            100
-                                                        )
-                                                    }%;
-                                                "
-                                            ></div>
-
-                                        </div>
-
-                                    </div>
-
-                                `)
-                                .join("")
+                            normalFeatures.length === 0
+                                ? `<p style="color: #6b7280; font-size: 13px; padding: 8px 0;">No significant features pushed toward normal.</p>`
+                                : normalFeatures
+                                    .slice(0, 6)
+                                    .map(feature => {
+                                        const val = Number(feature.shap_value) || 0;
+                                        const width = Math.min((Math.abs(val) / maxShap) * 100, 100);
+                                        return `
+                                            <div class="shap-feature">
+                                                <div class="shap-feature-header">
+                                                    <strong>${feature.feature || "Feature"}</strong>
+                                                    <span class="normal-value">${val.toFixed(3)}</span>
+                                                </div>
+                                                <div class="shap-bar">
+                                                    <div
+                                                        class="shap-bar-normal"
+                                                        style="width: ${width.toFixed(1)}%;"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    })
+                                    .join("")
                         }
 
                     </div>
@@ -524,99 +540,6 @@ if (performanceCanvas) {
     });
 
 }
-
-    
-// ================= CREATE SHAP FEATURE =================
-
-function createShapFeature(item, type) {
-
-    const container =
-        document.createElement("div");
-
-    container.className =
-        "shap-feature";
-
-
-    const header =
-        document.createElement("div");
-
-    header.className =
-        "shap-feature-header";
-
-
-    const featureName =
-        document.createElement("span");
-
-    featureName.className =
-        "shap-feature-name";
-
-    featureName.textContent =
-        item.feature;
-
-
-    const featureValue =
-        document.createElement("span");
-
-    featureValue.className =
-        "shap-feature-value";
-
-
-    const sign =
-        item.shap_value >= 0
-            ? "+"
-            : "";
-
-
-    featureValue.textContent =
-        `${sign}${item.shap_value.toFixed(3)}`;
-
-
-    header.appendChild(featureName);
-
-    header.appendChild(featureValue);
-
-
-    // ================= BAR =================
-
-    const barContainer =
-        document.createElement("div");
-
-    barContainer.className =
-        "shap-bar-container";
-
-
-    const bar =
-        document.createElement("div");
-
-    bar.className =
-        "shap-bar";
-
-
-    // Scale bar based on SHAP magnitude
-
-    const percentage =
-        Math.min(
-            Math.abs(item.shap_value) / 7.33 * 100,
-            100
-        );
-
-
-    bar.style.width =
-        `${percentage}%`;
-
-
-    barContainer.appendChild(bar);
-
-
-    container.appendChild(header);
-
-    container.appendChild(barContainer);
-
-
-    return container;
-
-}
-
 
 // ================= RECENT TRANSACTIONS =================
 

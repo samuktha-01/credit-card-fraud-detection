@@ -102,7 +102,7 @@
 
             <!-- ================= STATISTICS ================= -->
 
-            <section class="stats-grid">
+            <section id="dashboard" class="stats-grid">
 
                 <div class="stat-card">
 
@@ -193,7 +193,7 @@
 
             <!-- ================= TRANSACTION DETECTION ================= -->
 
-            
+            <section id="transactionDetection" class="detection-card">
 
                 <div class="section-heading">
 
@@ -247,6 +247,8 @@
                     <h2 id="prediction">
                         Analyzing Transaction...
                     </h2>
+
+                    <p id="resultErrorNotice" style="display: none; color: #c2410c; font-size: 14px; font-weight: 500; margin-top: 8px; margin-bottom: 12px;"></p>
 
 
                     <div class="result-details">
@@ -324,110 +326,10 @@
 
             </section>
 
-            </section>
-
 
             <!-- ================= SHAP EXPLANATION ================= -->
 
-            <section id="explanationSection" class="explanation-section" style="display: none;">
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <h2>
-    🔍 Why Was This Transaction
-    Classified This Way?
-</h2>
-
-<p class="explanation-transaction">
-    Transaction #${rowNumber}
-</p>
-
-<p>
-    SHAP shows which features
-    pushed the model toward
-    FRAUD or NORMAL.
-</p>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Explanation Summary -->
-
-                <div class="explanation-summary">
-
-                    <div>
-
-                        <span>Transaction</span>
-
-                        <strong id="explanationTransaction">
-                            -
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>Prediction</span>
-
-                        <strong id="explanationPrediction">
-                            -
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>Fraud Probability</span>
-
-                        <strong id="explanationProbability">
-                            -
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <!-- SHAP Feature Impacts -->
-
-                <div class="shap-columns">
-
-
-                    <!-- Fraud Features -->
-
-                    <div class="shap-card fraud-impact">
-
-                        <h3>
-                            🚨 Features pushing toward FRAUD
-                        </h3>
-
-                        <div id="fraudFeatures"></div>
-
-                    </div>
-
-
-                    <!-- Normal Features -->
-
-                    <div class="shap-card normal-impact">
-
-                        <h3>
-                            ✅ Features pushing toward NORMAL
-                        </h3>
-
-                        <div id="normalFeatures"></div>
-
-                    </div>
-
-
-                </div>
-
-            </section>
+            <section id="explanationSection" class="explanation-section" style="display: none;"></section>
 
 
            
@@ -648,6 +550,7 @@
 
             <!-- ================= ANALYTICS ================= -->
 
+            <section id="analytics" class="analytics-card">
 
     <div class="section-heading">
 
@@ -729,7 +632,7 @@
 
 <!-- ================= MODEL PERFORMANCE ================= -->
 
-<section id="modelPerformance" class="performance-card"></section>
+<section id="modelPerformance" class="performance-card">
 
     <div class="section-heading">
 

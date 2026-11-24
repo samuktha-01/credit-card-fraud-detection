@@ -19,6 +19,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Dataset path
 DATA_PATH = BASE_DIR / "data" / "creditcard.csv"
 
+# In-memory dataset cache
+_dataset_cache = None
+
+
+def get_dataset() -> pd.DataFrame:
+    """
+    Retrieve the dataset from memory cache or load from disk on first call.
+    """
+    global _dataset_cache
+    if _dataset_cache is None:
+        _dataset_cache = pd.read_csv(DATA_PATH)
+    return _dataset_cache
+
 
 # ============================================================
 # TRANSACTION HISTORY
@@ -187,7 +200,7 @@ def predict(transaction: Transaction):
 @app.get("/demo/normal")
 def demo_normal():
 
-    data = pd.read_csv(DATA_PATH)
+    data = get_dataset()
 
     # Row 20000 is used as a known normal example
     transaction = (
@@ -218,7 +231,7 @@ def demo_normal():
 @app.get("/demo/fraud")
 def demo_fraud():
 
-    data = pd.read_csv(DATA_PATH)
+    data = get_dataset()
 
     # Row 541 is used as a known fraud example
     transaction = (
@@ -250,7 +263,7 @@ def demo_fraud():
 def analyze_transaction(row_number: int):
 
     # Load dataset
-    data = pd.read_csv(DATA_PATH)
+    data = get_dataset()
 
 
     # --------------------------------------------------------

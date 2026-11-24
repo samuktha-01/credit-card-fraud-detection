@@ -1,13 +1,18 @@
+from pathlib import Path
 import joblib
 import pandas as pd
 import shap
 
+# Project root directory and paths
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_PATH = BASE_DIR / "models" / "fraud_model.pkl"
+DATA_PATH = BASE_DIR / "data" / "creditcard.csv"
 
 # Load model
-model = joblib.load("models/fraud_model.pkl")
+model = joblib.load(MODEL_PATH)
 
 # Load dataset
-data = pd.read_csv("data/creditcard.csv")
+data = pd.read_csv(DATA_PATH)
 
 # Create SHAP explainer
 explainer = shap.TreeExplainer(model)
